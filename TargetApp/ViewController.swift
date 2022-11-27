@@ -9,6 +9,11 @@ import UIKit
 import SceneKit
 import ARKit
 
+enum BoxBodyType : Int {
+    case bullet = 1
+    case barrier = 2
+}
+
 class ViewController: UIViewController, ARSCNViewDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
@@ -35,10 +40,17 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         box1.materials = [material]
         
         let box1Node = SCNNode(geometry: box1)
+        box1Node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+        box1Node.physicsBody?.categoryBitMask = BoxBodyType.barrier.rawValue
         box1Node.position = SCNVector3(0, 0, -0.4)
         
         let box2Node = SCNNode(geometry: box1)
+        box2Node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+        box1Node.physicsBody?.categoryBitMask = BoxBodyType.barrier.rawValue
+        
         let box3Node = SCNNode(geometry: box1)
+        box3Node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+        box1Node.physicsBody?.categoryBitMask = BoxBodyType.barrier.rawValue
         
         box2Node.position = SCNVector3(-0.2, 0, -0.4)
         box3Node.position = SCNVector3(0.2, -0.2, -0.5)
@@ -74,6 +86,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         let boxNode = SCNNode(geometry: box)
         boxNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: nil)
+        boxNode.physicsBody?.categoryBitMask = BoxBodyType.bullet.rawValue
         boxNode.physicsBody?.isAffectedByGravity = false
         
         boxNode.simdTransform = matrix_multiply(currentFrame.camera.transform, translation)
