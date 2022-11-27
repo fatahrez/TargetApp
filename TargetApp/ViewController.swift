@@ -14,9 +14,11 @@ enum BoxBodyType : Int {
     case barrier = 2
 }
 
-class ViewController: UIViewController, ARSCNViewDelegate {
+class ViewController: UIViewController, ARSCNViewDelegate,
+ SCNPhysicsContactDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
+    var lastContactNode: SCNNode!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -40,15 +42,18 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         box1.materials = [material]
         
         let box1Node = SCNNode(geometry: box1)
+        box1Node.name = "Barrier1"
         box1Node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
         box1Node.physicsBody?.categoryBitMask = BoxBodyType.barrier.rawValue
         box1Node.position = SCNVector3(0, 0, -0.4)
         
         let box2Node = SCNNode(geometry: box1)
+        box2Node.name = "Barrier2"
         box2Node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
         box1Node.physicsBody?.categoryBitMask = BoxBodyType.barrier.rawValue
         
         let box3Node = SCNNode(geometry: box1)
+        box3Node.name = "Barrier3"
         box3Node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
         box1Node.physicsBody?.categoryBitMask = BoxBodyType.barrier.rawValue
         
@@ -62,7 +67,36 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         // Set the scene to the view
         sceneView.scene = scene
         
+        self.sceneView.scene.physicsWorld.contactDelegate = self
+        
         registerGestureRecognizers()
+    }
+    
+    func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
+        
+        var contactNode: SCNNode!
+        
+        
+        if contact.nodeA.name == "Bullet" {
+            contactNode = contact.nodeB
+        } else {
+            contactNode = contact.nodeA
+        }
+        
+        if self.lastContactNode != nil && self.lastContactNode == contactNode {
+            return
+        }
+        
+        self.lastContactNode = contactNode
+        
+        let box = SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0)
+        
+        let material = SCNMaterial()
+        material.diffuse.contents = UIColor.green
+        
+        box.materials = [material]
+        
+        self.lastContactNode.geometry = box
     }
     
     private func registerGestureRecognizers() {
@@ -85,8 +119,10 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         material.diffuse.contents = UIColor.yellow
         
         let boxNode = SCNNode(geometry: box)
+        boxNode.name = "Bullet"
         boxNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: nil)
         boxNode.physicsBody?.categoryBitMask = BoxBodyType.bullet.rawValue
+        boxNode.physicsBody?.contactTestBitMask = BoxBodyType.barrier.rawValue
         boxNode.physicsBody?.isAffectedByGravity = false
         
         boxNode.simdTransform = matrix_multiply(currentFrame.camera.transform, translation)
